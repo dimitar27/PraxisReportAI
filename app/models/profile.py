@@ -1,4 +1,3 @@
-# app/models/profile.py
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from .base import Base, TimestampMixin

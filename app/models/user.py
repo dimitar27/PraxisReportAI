@@ -1,4 +1,3 @@
-# app/models/user.py
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from .base import Base, TimestampMixin
@@ -10,7 +9,7 @@ class User(Base, TimestampMixin):
     profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
     password_hash = Column(String, nullable=False)
     role = Column(String, nullable=False)  # doctor|assistant|admin
-    title = Column(String)
+    title = Column(String, nullable=True)
     specialization = Column(String)
     practice_name = Column(String)
 
