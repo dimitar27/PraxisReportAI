@@ -1,9 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from app.models.user import User
+from fastapi import APIRouter, HTTPException
 from app.models.profile import Profile
 from app.schemas.user import UserCreate
-from app.db import get_db
 from app.core.security import get_password_hash, require_admin
 from app.core.security import admin_only
 from app.schemas.user import UserUpdate
@@ -21,11 +18,9 @@ def create_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(admin_only)
 ):
-    # Check if email already exists
     if db.query(Profile).filter_by(email=user_data.email).first():
         raise HTTPException(status_code=400, detail="Email already exists")
 
-    # Create Profile
     profile = Profile(
         email=user_data.email,
         first_name=user_data.first_name,
@@ -35,17 +30,18 @@ def create_user(
     db.add(profile)
     db.flush()
 
-    # Create User
+    title = user_data.title or ("Dr. med." if user_data.role == "doctor" else "")
+
     user = User(
         profile_id=profile.id,
         role=user_data.role,
         password_hash=get_password_hash(user_data.password),
-        title=user_data.title
+        title=title
     )
     db.add(user)
     db.commit()
+    db.refresh(user)
     return {"message": "User created", "user_id": user.id}
-
 
 @router.get("/debug/users")
 def get_all_users(db: Session = Depends(get_db)):
