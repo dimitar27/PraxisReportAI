@@ -12,17 +12,19 @@ from datetime import datetime, timedelta, timezone
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/signin")
 
-
 SECRET_KEY = "your-secret-key"
 ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") #for password hashing
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
+
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
@@ -36,6 +38,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
 
 def require_admin(user: User = Depends(get_current_user)):
     if user.role != "admin":
@@ -59,8 +62,6 @@ def admin_only(
 
     return user
 
-
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()

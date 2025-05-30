@@ -13,7 +13,6 @@ from fastapi import status
 
 router = APIRouter()
 
-
 @router.post("/signin")
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
