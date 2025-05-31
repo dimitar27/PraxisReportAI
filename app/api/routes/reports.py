@@ -5,7 +5,7 @@ from app.models.medical_report import MedicalReport
 from app.models.patient import Patient
 from app.models.user import User
 from app.schemas.medical_report import MedicalReportCreate, MedicalReportUpdate, MedicalReportOut
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_doctor_or_admin
 
 router = APIRouter()
 
@@ -14,7 +14,7 @@ def create_report(
     patient_id: int,
     report_data: MedicalReportCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_doctor_or_admin)
 ):
     patient = db.query(Patient).filter_by(id=patient_id).first()
     if not patient:
@@ -56,7 +56,7 @@ def update_report(
     report_id: int,
     updates: MedicalReportUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_doctor_or_admin)
 ):
     report = db.query(MedicalReport).filter_by(id=report_id).first()
     if not report:
@@ -73,7 +73,7 @@ def update_report(
 def delete_report(
     report_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_doctor_or_admin)
 ):
     report = db.query(MedicalReport).filter_by(id=report_id).first()
     if not report:

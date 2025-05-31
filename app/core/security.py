@@ -62,6 +62,10 @@ def admin_only(
 
     return user
 
+def require_doctor_or_admin(user: User = Depends(get_current_user)):
+    if user.role not in ("doctor", "admin"):
+        raise HTTPException(status_code=403, detail="Doctor or admin privileges required")
+    return user
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
