@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date
+from app.schemas.address import AddressCreate, AddressUpdate, AddressOut
 
 class PatientCreate(BaseModel):
     first_name: str
@@ -13,6 +14,7 @@ class PatientCreate(BaseModel):
     pre_diagnosis: Optional[str] = None
     current_diagnosis: Optional[str] = None
     notes: Optional[str] = None
+    address: Optional[AddressCreate] = None
 
 class PatientOut(BaseModel):
     id: int
@@ -20,6 +22,7 @@ class PatientOut(BaseModel):
     last_name: str
     email: str
     phone_number: str
+    address: Optional[AddressOut] = None
 
     model_config = {
         "from_attributes": True
@@ -45,6 +48,7 @@ class PatientUpdate(BaseModel):
     pre_diagnosis: Optional[str] = None
     current_diagnosis: Optional[str] = None
     notes: Optional[str] = None
+    address: Optional[AddressUpdate] = None
 
 class DoctorSummary(BaseModel):
     id: int

@@ -13,4 +13,8 @@ class Profile(Base, TimestampMixin):
 
     user = relationship("User", back_populates="profile", uselist=False)
     patient = relationship("Patient", back_populates="profile", uselist=False)
-    addresses = relationship("Address", back_populates="profile")
+    addresses = relationship(
+        "Address",
+        back_populates="profile",
+        cascade="all, delete-orphan"
+    )

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from app.models import Address
 from app.models.profile import Profile
 from app.schemas.user import UserCreate
 from app.core.security import get_password_hash, require_admin
@@ -8,6 +9,7 @@ from app.schemas.user import PasswordReset
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from app.db import get_db
+from app.core.security import get_current_user
 from app.models.user import User
 
 router = APIRouter()
@@ -46,21 +48,33 @@ def create_user(
 @router.get("/debug/users")
 def get_all_users(db: Session = Depends(get_db)):
     users = db.query(User).all()
-    return [
-        {
-            "id": user.id,
-            "email": user.profile.email,
-            "first_name": user.profile.first_name,
-            "last_name": user.profile.last_name,
-            "phone_number": user.profile.phone_number,
-            "role": user.role,
-            "title": user.title
-        }
-        for user in users
-    ]
+    result = []
 
-from app.core.security import get_current_user
-from app.models.user import User
+    for user in users:
+        profile = user.profile
+        address = profile.addresses[0] if profile.addresses else None
+
+        user_data = {
+            "id": user.id,
+            "email": profile.email,
+            "first_name": profile.first_name,
+            "last_name": profile.last_name,
+            "phone_number": profile.phone_number,
+            "role": user.role,
+            "title": user.title,
+        }
+
+        if address:
+            user_data["address"] = {
+                "street": address.street,
+                "postal_code": address.postal_code,
+                "city": address.city,
+                "country": address.country
+            }
+
+        result.append(user_data)
+
+    return result
 
 @router.get("/me")
 def read_own_profile(current_user: User = Depends(get_current_user)):
@@ -93,13 +107,40 @@ def update_user_partial(
         if value is not None:
             setattr(user.profile, key, value)
 
+    # Update or create address
+    address = None
+    if user_update.address:
+        address = user.profile.addresses[0] if user.profile.addresses else None
+        if not address:
+            address = Address(profile_id=user.profile.id)
+            db.add(address)
+
+        for field, value in user_update.address.dict(exclude_unset=True).items():
+            setattr(address, field, value)
+
     db.commit()
     db.refresh(user)
+
+    # Prepare address dict if it exists
+    address_data = None
+    if user.profile.addresses:
+        addr = user.profile.addresses[0]
+        address_data = {
+            "street": addr.street,
+            "postal_code": addr.postal_code,
+            "city": addr.city,
+            "country": addr.country
+        }
+
     return {
         "id": user.id,
         "email": user.profile.email,
+        "first_name": user.profile.first_name,
+        "last_name": user.profile.last_name,
+        "phone_number": user.profile.phone_number,
         "role": user.role,
-        "title": user.title
+        "title": user.title,
+        "address": address_data
     }
 
 @router.delete("/users/{user_id}")
