@@ -11,6 +11,8 @@ class UserCreate(BaseModel):
     password: str
     role: str  # "admin", "doctor", "assistant"
     title: Optional[str] = None
+    specialization: Optional[str] = None
+    practice_name: Optional[str] = None
     address: Optional[AddressCreate] = None
 
 class UserUpdate(BaseModel):
@@ -20,6 +22,8 @@ class UserUpdate(BaseModel):
     phone_number: Optional[str] = None
     role: Optional[str] = None
     title: Optional[str] = None
+    specialization: Optional[str] = None
+    practice_name: Optional[str] = None
     address: Optional[AddressUpdate] = None
 
 class PasswordReset(BaseModel):

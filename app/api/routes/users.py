@@ -38,9 +38,23 @@ def create_user(
         profile_id=profile.id,
         role=user_data.role,
         password_hash=get_password_hash(user_data.password),
-        title=title
+        title=title,
+        specialization=user_data.specialization,
+        practice_name=user_data.practice_name
     )
     db.add(user)
+
+    # Handle optional address
+    if user_data.address:
+        address = Address(
+            profile_id=profile.id,
+            street=user_data.address.street,
+            postal_code=user_data.address.postal_code,
+            city=user_data.address.city,
+            country=user_data.address.country
+        )
+        db.add(address)
+
     db.commit()
     db.refresh(user)
     return {"message": "User created", "user_id": user.id}
@@ -62,6 +76,8 @@ def get_all_users(db: Session = Depends(get_db)):
             "phone_number": profile.phone_number,
             "role": user.role,
             "title": user.title,
+            "specialization": user.specialization,
+            "practice_name": user.practice_name,
         }
 
         if address:
@@ -81,8 +97,11 @@ def read_own_profile(current_user: User = Depends(get_current_user)):
     return {
         "id": current_user.id,
         "role": current_user.role,
-        "title": current_user.title
+        "title": current_user.title,
+        "specialization": current_user.specialization,
+        "practice_name": current_user.practice_name
     }
+
 
 @router.patch("/users/{user_id}")
 def update_user_partial(
@@ -95,19 +114,16 @@ def update_user_partial(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Update user fields
-    for key in ["role", "title"]:
+    for key in ["role", "title", "specialization", "practice_name"]:
         value = getattr(user_update, key)
         if value is not None:
             setattr(user, key, value)
 
-    # Update profile fields
     for key in ["email", "first_name", "last_name", "phone_number"]:
         value = getattr(user_update, key)
         if value is not None:
             setattr(user.profile, key, value)
 
-    # Update or create address
     address = None
     if user_update.address:
         address = user.profile.addresses[0] if user.profile.addresses else None
@@ -121,7 +137,6 @@ def update_user_partial(
     db.commit()
     db.refresh(user)
 
-    # Prepare address dict if it exists
     address_data = None
     if user.profile.addresses:
         addr = user.profile.addresses[0]
@@ -140,6 +155,8 @@ def update_user_partial(
         "phone_number": user.profile.phone_number,
         "role": user.role,
         "title": user.title,
+        "specialization": user.specialization,
+        "practice_name": user.practice_name,
         "address": address_data
     }
 
