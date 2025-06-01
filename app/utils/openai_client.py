@@ -26,7 +26,7 @@ def generate_medical_report(
     sections = [
         "Du bist ein erfahrener Neurologe. Erstelle einen strukturierten medizinischen Bericht "
         "in professionellem Deutsch auf Basis folgender Informationen.",
-        f"Titel des Berichts: {title.strip()}",
+        f"Der Titel des Berichts lautet: {title.strip()}, aber verwende ihn bitte **nicht** im Text.",
         "Verwende folgende Abschnitte:",
         "- Befund",
         "- Diagnose",
