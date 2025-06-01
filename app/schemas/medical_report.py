@@ -8,10 +8,10 @@ class MedicalReportCreate(BaseModel):
     physical_exam: str
 
 class MedicalReportUpdate(BaseModel):
-    title: Optional[str]
-    patient_history: Optional[str]
-    physical_exam: Optional[str]
-    final_report: Optional[str]
+    title: Optional[str] = None
+    patient_history: Optional[str] = None
+    physical_exam: Optional[str] = None
+    final_report: Optional[str] = None
 
 class MedicalReportOut(BaseModel):
     id: int

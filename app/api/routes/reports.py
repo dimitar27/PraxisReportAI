@@ -6,6 +6,7 @@ from app.models.patient import Patient
 from app.models.user import User
 from app.schemas.medical_report import MedicalReportCreate, MedicalReportUpdate, MedicalReportOut
 from app.core.security import get_current_user, require_doctor_or_admin
+from app.utils.openai_client import generate_medical_report
 
 router = APIRouter()
 
@@ -14,23 +15,44 @@ def create_report(
     patient_id: int,
     report_data: MedicalReportCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_doctor_or_admin)
+    current_user: User = Depends(get_current_user)
 ):
     patient = db.query(Patient).filter_by(id=patient_id).first()
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
+    # Get historical reports if any
+    previous_reports = [
+        r.final_report for r in patient.reports
+        if r.final_report
+    ]
+
+    # Call OpenAI to generate the final report
+    final_report = generate_medical_report(
+        title=report_data.title,
+        history=report_data.patient_history,
+        exam=report_data.physical_exam,
+        gender=patient.gender,
+        allergies=patient.allergies or "",
+        pre_dx=patient.pre_diagnosis or "",
+        current_dx=patient.current_diagnosis or "",
+        notes=patient.notes or "",
+        previous_reports=previous_reports
+    )
+
+    # Save to DB
     report = MedicalReport(
         patient_id=patient_id,
         title=report_data.title,
         patient_history=report_data.patient_history,
         physical_exam=report_data.physical_exam,
-        final_report=None
+        final_report=final_report
     )
     db.add(report)
     db.commit()
     db.refresh(report)
     return report
+
 
 @router.get("/patients/{patient_id}/reports", response_model=list[MedicalReportOut])
 def list_reports_for_patient(
