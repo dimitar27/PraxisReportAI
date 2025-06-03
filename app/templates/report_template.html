@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 2.5cm 2cm 2.5cm 2cm;
+            @bottom-center {
+                content: "Seite " counter(page) " von " counter(pages);
+                font-size: 10pt;
+                color: #555;
+            }
+        }
+
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #000;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .info {
+            max-width: 65%;
+        }
+
+        .logo {
+            height: 60px;
+            width: auto;
+        }
+
+        .section-header {
+            margin: 2rem 0 0.5rem 0;
+            font-size: 13pt;
+            font-weight: bold;
+            margin: 2rem 0 0 0; /* adjusted */
+            page-break-after: avoid;
+        }
+
+        .small-section {
+            margin-bottom: 0.2rem;
+            page-break-inside: avoid;
+        }
+
+        .paragraph-block {
+            margin-top: 0; /* adjusted */
+            margin-bottom: 1.4rem;
+            page-break-inside: avoid;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #999;
+            margin: 1rem 0 1rem 0;
+        }
+
+        p {
+            margin: 0.2em 0;
+            text-align: justify;
+            page-break-inside: avoid;
+        }
+
+        .footer {
+            margin-top: 4rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="info">
+            <strong>{{ practice_name }}</strong><br>
+            {{ doctor_title }} {{ doctor_name }}<br>
+            {{ specialization }}<br>
+            {{ street }}, {{ postal_code }} {{ city }}<br>
+            Tel: {{ phone }} | {{ email }}
+        </div>
+        {% if logo_path %}
+        <div>
+            <img src="{{ logo_path }}" alt="Logo" class="logo">
+        </div>
+        {% endif %}
+    </div>
+
+    <p>{{ city }}, {{ date }}</p>
+
+    <div class="section-header">
+        Arztbrief zu {{ gendered_prefix }} {{ patient_name }}, geb. {{ birth_date }}
+    </div>
+    <hr>
+
+    <div class="small-section"><strong>Geschlecht:</strong> {{ patient_gender }}</div>
+    {% if allergies %}
+    <div class="small-section"><strong>Allergien:</strong> {{ allergies }}</div>
+    {% endif %}
+    {% if pre_dx %}
+    <div class="small-section"><strong>Verdachtsdiagnose:</strong> {{ pre_dx }}</div>
+    {% endif %}
+    {% if current_dx %}
+    <div class="small-section" style="margin-bottom: 1.2rem;"><strong>Aktuelle Diagnose:</strong> {{ current_dx }}</div>
+    {% endif %}
+
+    <div class="section-header">Anamnese:</div>
+    <div class="paragraph-block">{{ history }}</div>
+
+    <div class="section-header">Körperliche Untersuchung:</div>
+    <div class="paragraph-block">{{ exam }}</div>
+
+    <div class="paragraph-block">
+        {{ final_report|safe }}
+    </div>
+
+    <div class="footer">
+        Mit freundlichen Grüßen<br><br>
+        {{ doctor_title }} {{ doctor_name }}<br>
+        {{ specialization }}
+    </div>
+</body>
+</html>

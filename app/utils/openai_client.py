@@ -75,7 +75,7 @@ def generate_medical_report(
             }
         ],
         temperature=0.6,
-        max_tokens=800
+        max_tokens=1800
     )
 
     return response.choices[0].message.content.strip()

@@ -1,4 +1,3 @@
-# app/models/patient.py
 from sqlalchemy import Column, Integer, Date, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from .base import Base, TimestampMixin
