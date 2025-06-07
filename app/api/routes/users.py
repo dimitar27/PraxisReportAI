@@ -1,16 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.db import get_db
 from app.models import Address
 from app.models.profile import Profile
-from app.schemas.user import UserCreate
-from app.core.security import get_password_hash, require_admin
-from app.core.security import admin_only
-from app.schemas.user import UserUpdate
-from app.schemas.user import PasswordReset
-from fastapi import Depends
-from sqlalchemy.orm import Session
-from app.db import get_db
-from app.core.security import get_current_user
 from app.models.user import User
+from app.schemas.user import UserCreate, UserUpdate, PasswordReset
+from app.core.security import get_password_hash, admin_only, get_current_user
 
 router = APIRouter()
 
@@ -108,7 +104,7 @@ def update_user_partial(
     user_id: int,
     user_update: UserUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(admin_only)
 ):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -164,7 +160,7 @@ def update_user_partial(
 def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(admin_only)
 ):
     if current_user.id == user_id:
         raise HTTPException(status_code=403, detail="You cannot delete yourself")
@@ -187,7 +183,7 @@ def reset_password(
     user_id: int,
     password_data: PasswordReset,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(admin_only)
 ):
     """
     Admin-only endpoint to reset a user's password.

@@ -5,5 +5,4 @@ from .patient import Patient
 from .medical_report import MedicalReport
 from .address import Address
 
-# so that `Base.metadata` includes all tables:
 __all__ = ["Base", "User", "Profile", "Patient", "MedicalReport", "Address"]

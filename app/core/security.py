@@ -40,12 +40,6 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     return user
 
 
-def require_admin(user: User = Depends(get_current_user)):
-    if user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin privileges required")
-    return user
-
-
 def admin_only(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
