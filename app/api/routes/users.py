@@ -10,7 +10,7 @@ from app.core.security import get_password_hash, admin_only, get_current_user
 
 router = APIRouter()
 
-@router.post("/users")
+@router.post("/users", status_code=201)
 def create_user(
     user_data: UserCreate,
     db: Session = Depends(get_db),
