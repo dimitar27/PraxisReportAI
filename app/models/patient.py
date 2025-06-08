@@ -3,6 +3,9 @@ from sqlalchemy.orm import relationship
 from .base import Base, TimestampMixin
 
 class Patient(Base, TimestampMixin):
+    """
+    Represents a patient in the system. Each patient has a profile and may have multiple medical reports.
+    """
     __tablename__ = "patients"
 
     id = Column(Integer, primary_key=True)
@@ -15,6 +18,7 @@ class Patient(Base, TimestampMixin):
     notes = Column(Text)
     assigned_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
+    # Relationships
     profile = relationship("Profile", back_populates="patient")
     doctor  = relationship("User", back_populates="patients")
     reports = relationship("MedicalReport", back_populates="patient")

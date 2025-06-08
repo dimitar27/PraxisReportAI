@@ -3,6 +3,10 @@ from sqlalchemy.orm import relationship
 from .base import Base, TimestampMixin
 
 class MedicalReport(Base, TimestampMixin):
+    """
+    Represents a medical report for a patient, typically generated via AI.
+    Includes exam details, history, and the final report.
+    """
     __tablename__ = "medical_reports"
 
     id = Column(Integer, primary_key=True)
@@ -12,4 +16,5 @@ class MedicalReport(Base, TimestampMixin):
     physical_exam = Column(Text)
     final_report = Column(Text)
 
+    # Link to the patient that owns this report
     patient = relationship("Patient", back_populates="reports")

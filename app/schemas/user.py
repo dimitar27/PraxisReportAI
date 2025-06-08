@@ -4,6 +4,7 @@ from app.schemas.address import AddressCreate
 from app.schemas.address import AddressUpdate
 
 class UserCreate(BaseModel):
+    """Data required to create a new user (admin, doctor, or assistant)."""
     email: str
     first_name: str
     last_name: str
@@ -16,6 +17,7 @@ class UserCreate(BaseModel):
     address: Optional[AddressCreate] = None
 
 class UserUpdate(BaseModel):
+    """Fields that can be updated for a user."""
     email: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -27,4 +29,5 @@ class UserUpdate(BaseModel):
     address: Optional[AddressUpdate] = None
 
 class PasswordReset(BaseModel):
+    """Schema for resetting a user's password."""
     new_password: str
