@@ -1,23 +1,27 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session, joinedload
+
+from datetime import datetime
+import os
+import re
+from pathlib import Path
+
+from jinja2 import Environment, FileSystemLoader
+from weasyprint import HTML
+
 from app.db import get_db
 from app.models.medical_report import MedicalReport
 from app.models.patient import Patient
+from app.models.profile import Profile
 from app.models.user import User
-from app.schemas.medical_report import MedicalReportCreate, MedicalReportUpdate, MedicalReportOut
+from app.schemas.medical_report import (
+    MedicalReportCreate,
+    MedicalReportUpdate,
+    MedicalReportOut,
+)
 from app.core.security import get_current_user, require_doctor_or_admin
 from app.utils.openai_client import generate_medical_report
-from fastapi.responses import FileResponse
-from app.utils.pdf_generator import generate_pdf
-from app.models.profile import Profile
-from jinja2 import Environment, FileSystemLoader
-from weasyprint import HTML
-from datetime import datetime
-import os
-from pathlib import Path
-from jinja2 import Environment, FileSystemLoader
-import re
-
 
 router = APIRouter()
 
@@ -28,6 +32,10 @@ STATIC_DIR = os.path.abspath(BASE_DIR / "static")
 env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)))
 
 def format_report_sections(text: str) -> str:
+    """
+    Converts markdown-like **section** formatting into HTML
+    and replaces newlines with <br>.
+    """
     if not text:
         return ""
 
@@ -48,15 +56,23 @@ def create_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """
+    Generate and store a medical report for a given patient using OpenAI.
+
+    - Retrieves previous reports for context.
+    - Calls AI to generate a new final report.
+    - Saves the complete report to the database.
+    """
     patient = db.query(Patient).filter_by(id=patient_id).first()
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
-    # Get historical reports if any
-    previous_reports = [
-        r.final_report for r in patient.reports
-        if r.final_report
-    ]
+    # Get previous reports (if any) to provide context
+    # for generating the new medical report
+    previous_reports = []
+    for report in patient.reports:
+        if report.final_report:
+            previous_reports.append(report.final_report)
 
     # Call OpenAI to generate the final report
     final_report = generate_medical_report(
@@ -91,6 +107,10 @@ def list_reports_for_patient(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """
+    Retrieve all medical reports for a given patient.
+    Accessible to all authenticated users.
+    """
     return db.query(MedicalReport).filter_by(patient_id=patient_id).all()
 
 @router.get("/reports/{report_id}", response_model=MedicalReportOut)
@@ -99,10 +119,15 @@ def get_report_by_id(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """
+    Retrieve a specific medical report by its ID.
+    Accessible to all authenticated users.
+    """
     report = db.query(MedicalReport).filter_by(id=report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     return report
+
 
 @router.patch("/reports/{report_id}", response_model=MedicalReportOut)
 def update_report(
@@ -111,10 +136,15 @@ def update_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_doctor_or_admin)
 ):
+    """
+    Update a medical report by its ID.
+    Only accessible to doctors and administrators.
+    """
     report = db.query(MedicalReport).filter_by(id=report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
 
+    # update only the fields that were provided in the request
     for field, value in updates.dict(exclude_unset=True).items():
         setattr(report, field, value)
 
@@ -122,12 +152,17 @@ def update_report(
     db.refresh(report)
     return report
 
+
 @router.delete("/reports/{report_id}")
 def delete_report(
     report_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_doctor_or_admin)
 ):
+    """
+    Delete a specific medical report by ID.
+    Accessible to doctors and admins only.
+    """
     report = db.query(MedicalReport).filter_by(id=report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
@@ -143,6 +178,17 @@ def generate_report_pdf(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """
+    Generate and return a PDF version of a medical report.
+
+    - Retrieves the medical report, patient, and doctor data.
+    - Loads and fills an HTML template with the relevant information.
+    - Converts the rendered HTML to a PDF and returns it as a downloadable file.
+
+    Accessible to all authenticated users.
+    """
+    # Load report with related patient and doctor data
+    # (including their profiles and addresses)
     report = (
         db.query(MedicalReport)
         .options(
@@ -161,21 +207,27 @@ def generate_report_pdf(
 
     patient = report.patient
     if not patient or not patient.profile or not patient.doctor:
-        raise HTTPException(status_code=400, detail="Missing patient, profile, or doctor info")
+        raise HTTPException(status_code=400,
+                            detail="Missing patient, profile, or doctor info"
+        )
 
     doctor_user = patient.doctor
     profile = doctor_user.profile
     if not profile or not profile.addresses:
         raise HTTPException(status_code=400, detail="Doctor's address missing")
 
+    # Use the first address associated with the doctor
     address = profile.addresses[0]
 
+    # Convert formatted sections (like **Diagnosis**) into styled HTML
     formatted_report = format_report_sections(report.final_report)
 
     #Prepare logo path before rendering
     logo_file = os.path.join(STATIC_DIR, "logo.png")
     logo_path = f"file://{logo_file}" if os.path.exists(logo_file) else None
 
+    # Load the HTML template
+    # and populate it with report, patient, and doctor data
     template = env.get_template("report_template.html")
     rendered_html = template.render(
         practice_name=doctor_user.practice_name or "Praxis",
@@ -189,10 +241,14 @@ def generate_report_pdf(
 
         date=datetime.now().strftime("%d. %B %Y"),
 
-        patient_name=f"{patient.profile.first_name} {patient.profile.last_name}",
+        patient_name=(
+            f"{patient.profile.first_name} {patient.profile.last_name}"
+        ),
         birth_date=patient.date_of_birth.strftime("%d.%m.%Y"),
         patient_gender=patient.gender.capitalize(),
-        gendered_prefix="Herr" if patient.gender.lower() == "männlich" else "Frau",
+        gendered_prefix=(
+            "Herr" if patient.gender.lower() == "männlich" else "Frau"
+        ),
 
         allergies=patient.allergies,
         pre_dx=patient.pre_diagnosis,
@@ -205,14 +261,18 @@ def generate_report_pdf(
         doctor_title=doctor_user.title
     )
 
+    # Generate PDF from rendered HTML
     pdf = HTML(string=rendered_html).write_pdf()
 
+    filename = f'attachment; filename="arztbrief_{report_id}.pdf"'
+    # Return the PDF as a downloadable HTTP response
     return Response(
         content=pdf,
         media_type="application/pdf",
         headers={
-            "Content-Disposition": f'attachment; filename="arztbrief_{report_id}.pdf"'
+            "Content-Disposition": (
+                f'attachment; filename="arztbrief_{report_id}.pdf"'
+            )
         }
     )
-
 
