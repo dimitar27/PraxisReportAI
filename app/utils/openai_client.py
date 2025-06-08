@@ -3,8 +3,10 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 
-# Load environment variables
+# Load environment variables from .env
 load_dotenv()
+
+# Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
@@ -19,10 +21,28 @@ def generate_medical_report(
         notes: str = "",
         previous_reports: list[str] = None
 ) -> str:
-    # Determine gender-specific wording
-    patient_term = "die Patientin" if gender.lower() == "weiblich" else "der Patient"
+    """
+    Generate a structured medical report in professional German using OpenAI.
 
-    # Compose prompt sections
+    Args:
+        title (str): Report title (not included in output).
+        history (str): Patient history (Anamnese).
+        exam (str): Physical examination results.
+        gender (str, optional): Patient gender to guide phrasing.
+        allergies (str, optional): Known allergies.
+        pre_dx (str, optional): Preliminary diagnoses.
+        current_dx (str, optional): Current diagnoses.
+        notes (str, optional): Additional notes.
+        previous_reports (list[str], optional): Past reports to use as context.
+
+    Returns:
+        str: Generated medical report in German.
+    """
+    # Determine gender-specific wording
+    is_female = gender.lower() == "weiblich"
+    patient_term = "die Patientin" if is_female else "der Patient"
+
+    # Base instruction
     sections = [
         "Du bist ein erfahrener Neurologe. Erstelle einen strukturierten medizinischen Bericht "
         "in professionellem Deutsch auf Basis folgender Informationen.",
@@ -38,7 +58,7 @@ def generate_medical_report(
         f"Körperliche Untersuchung:\n{exam.strip()}"
     ]
 
-    # Optional fields
+    # Add optional fields
     if allergies:
         sections.append(f"Allergien:\n{allergies.strip()}")
     if pre_dx:
@@ -54,10 +74,10 @@ def generate_medical_report(
     # Final instruction
     sections.append("Erstelle jetzt den Abschlussbericht mit medizinischer Fachsprache.")
 
-    # Join prompt
+    # Combine into full prompt
     prompt = "\n\n".join(sections)
 
-    # Make the API call
+    # Call OpenAI API
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
