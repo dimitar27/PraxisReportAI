@@ -14,7 +14,7 @@ class UserCreate(BaseModel):
     title: Optional[str] = None
     specialization: Optional[str] = None
     practice_name: Optional[str] = None
-    address: Optional[AddressCreate] = None
+    address: AddressCreate # Required practice address
 
 class UserUpdate(BaseModel):
     """Fields that can be updated for a user."""
