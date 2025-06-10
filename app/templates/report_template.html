@@ -44,6 +44,11 @@
             page-break-after: avoid;
         }
 
+        .patient-info-normal {
+        font-weight: normal;
+        display: block;
+        }
+
         .small-section {
             margin-bottom: 0.2rem;
             page-break-inside: avoid;
@@ -91,7 +96,9 @@
     <p>{{ city }}, {{ date }}</p>
 
     <div class="section-header">
-        Arztbrief zu {{ gendered_prefix }} {{ patient_name }}, geb. {{ birth_date }}
+        <!--Arztbrief zu {{ gendered_prefix }} {{ patient_name }}, geb. {{ birth_date }}-->
+        {{ report_main_heading }}<br>
+        <span class="patient-info-normal">{{ gendered_prefix }} {{ patient_name }}, geb. {{ birth_date }} </span>
     </div>
     <hr>
 

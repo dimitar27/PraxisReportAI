@@ -256,6 +256,7 @@ def generate_report_pdf(
         history=report.patient_history,
         exam=report.physical_exam,
         final_report=formatted_report,
+        report_main_heading=report.title,
 
         doctor_name=f"{profile.first_name} {profile.last_name}",
         doctor_title=doctor_user.title

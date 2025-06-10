@@ -46,7 +46,10 @@ def generate_medical_report(
     sections = [
         "Du bist ein erfahrener Neurologe. Erstelle einen strukturierten medizinischen Bericht "
         "in professionellem Deutsch auf Basis folgender Informationen.",
+        # Uncomment this line to generate in English for demo purposes
+        # "Please create the report in English.",
         f"Der Titel des Berichts lautet: {title.strip()}, aber verwende ihn bitte **nicht** im Text.",
+        #"Verwende folgende Abschnitte und **fülle sie sehr ausführlich aus**:",
         "Verwende folgende Abschnitte:",
         "- Befund",
         "- Diagnose",
@@ -95,7 +98,7 @@ def generate_medical_report(
             }
         ],
         temperature=0.6,
-        max_tokens=1800
+        max_tokens=3000
     )
 
     return response.choices[0].message.content.strip()
