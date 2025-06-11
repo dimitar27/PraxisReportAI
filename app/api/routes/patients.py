@@ -82,7 +82,7 @@ def create_patient(
         date_of_birth=patient_data.date_of_birth,
         gender=patient_data.gender,
         allergies=patient_data.allergies,
-        pre_diagnosis=patient_data.pre_diagnosis,
+        past_illnesses=patient_data.past_illnesses,
         current_diagnosis=patient_data.current_diagnosis,
         notes=patient_data.notes,
     )
@@ -103,7 +103,7 @@ def create_patient(
         date_of_birth=patient.date_of_birth,
         gender=patient.gender,
         allergies=patient.allergies,
-        pre_diagnosis=patient.pre_diagnosis,
+        past_illnesses=patient.past_illnesses,
         current_diagnosis=patient.current_diagnosis,
         notes=patient.notes,
         address=(
@@ -149,7 +149,7 @@ def list_patients_for_doctor(
             date_of_birth=patient.date_of_birth,
             gender=patient.gender,
             allergies=patient.allergies,
-            pre_diagnosis=patient.pre_diagnosis,
+            past_illnesses=patient.past_illnesses,
             current_diagnosis=patient.current_diagnosis,
             notes=patient.notes,
             address=AddressOut.model_validate(address) if address else None
@@ -210,7 +210,7 @@ def update_patient(
             setattr(address, field, value)
 
     # Update patient-specific medical fields
-    for field in ["date_of_birth", "gender", "allergies", "pre_diagnosis", "current_diagnosis", "notes"]:
+    for field in ["date_of_birth", "gender", "allergies", "past_illnesses", "current_diagnosis", "notes"]:
         value = getattr(updates, field)
         if value is not None:
             setattr(patient, field, value)
@@ -231,7 +231,7 @@ def update_patient(
         date_of_birth=patient.date_of_birth,
         gender=patient.gender,
         allergies=patient.allergies,
-        pre_diagnosis=patient.pre_diagnosis,
+        past_illnesses=patient.past_illnesses,
         current_diagnosis=patient.current_diagnosis,
         notes=patient.notes,
         address=(
@@ -296,7 +296,7 @@ def get_all_patients_with_doctors(
                 date_of_birth=patient.date_of_birth,
                 gender=patient.gender,
                 allergies=patient.allergies,
-                pre_diagnosis=patient.pre_diagnosis,
+                past_illnesses=patient.past_illnesses,
                 current_diagnosis=patient.current_diagnosis,
                 notes=patient.notes,
                 address=AddressOut.model_validate(address)

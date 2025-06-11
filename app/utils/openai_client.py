@@ -16,7 +16,7 @@ def generate_medical_report(
         exam: str,
         gender: str = "",  # "weiblich" or "männlich"
         allergies: str = "",
-        pre_dx: str = "",
+        past_illnesses: str = "",
         current_dx: str = "",
         notes: str = "",
         previous_reports: list[str] = None
@@ -30,7 +30,7 @@ def generate_medical_report(
         exam (str): Physical examination results.
         gender (str, optional): Patient gender to guide phrasing.
         allergies (str, optional): Known allergies.
-        pre_dx (str, optional): Preliminary diagnoses.
+        past_illnesses (str, optional): past medical conditions.
         current_dx (str, optional): Current diagnoses.
         notes (str, optional): Additional notes.
         previous_reports (list[str], optional): Past reports to use as context.
@@ -64,8 +64,8 @@ def generate_medical_report(
     # Add optional fields
     if allergies:
         sections.append(f"Allergien:\n{allergies.strip()}")
-    if pre_dx:
-        sections.append(f"Vordiagnose:\n{pre_dx.strip()}")
+    if past_illnesses:
+        sections.append(f"Vorerkrankungen:\n{past_illnesses.strip()}")
     if current_dx:
         sections.append(f"Aktuelle Diagnose:\n{current_dx.strip()}")
     if notes:

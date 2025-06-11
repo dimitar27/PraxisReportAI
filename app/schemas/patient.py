@@ -12,7 +12,7 @@ class PatientCreate(BaseModel):
     date_of_birth: date
     gender: str
     allergies: Optional[str] = None
-    pre_diagnosis: Optional[str] = None
+    past_illnesses: Optional[str] = None
     current_diagnosis: Optional[str] = None
     notes: Optional[str] = None
     address: Optional[AddressCreate] = None
@@ -35,7 +35,7 @@ class PatientDetail(PatientOut):
     date_of_birth: date
     gender: str
     allergies: Optional[str] = None
-    pre_diagnosis: Optional[str] = None
+    past_illnesses: Optional[str] = None
     current_diagnosis: Optional[str] = None
     notes: Optional[str] = None
 
@@ -49,7 +49,7 @@ class PatientUpdate(BaseModel):
     date_of_birth: Optional[date] = None
     gender: Optional[str] = None
     allergies: Optional[str] = None
-    pre_diagnosis: Optional[str] = None
+    past_illnesses: Optional[str] = None
     current_diagnosis: Optional[str] = None
     notes: Optional[str] = None
     address: Optional[AddressUpdate] = None

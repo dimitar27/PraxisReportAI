@@ -13,7 +13,7 @@ class Patient(Base, TimestampMixin):
     date_of_birth = Column(Date)
     gender = Column(String)
     allergies = Column(Text)
-    pre_diagnosis = Column(Text)
+    past_illnesses = Column(Text)
     current_diagnosis = Column(Text)
     notes = Column(Text)
     assigned_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)

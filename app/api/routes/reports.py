@@ -81,7 +81,7 @@ def create_report(
         exam=report_data.physical_exam,
         gender=patient.gender,
         allergies=patient.allergies or "",
-        pre_dx=patient.pre_diagnosis or "",
+        past_illnesses=patient.past_illnesses or "",
         current_dx=patient.current_diagnosis or "",
         notes=patient.notes or "",
         previous_reports=previous_reports
@@ -251,7 +251,7 @@ def generate_report_pdf(
         ),
 
         allergies=patient.allergies,
-        pre_dx=patient.pre_diagnosis,
+        past_illnesses=patient.past_illnesses,
         current_dx=patient.current_diagnosis,
         history=report.patient_history,
         exam=report.physical_exam,
