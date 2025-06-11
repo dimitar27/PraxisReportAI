@@ -21,7 +21,7 @@ from app.schemas.medical_report import (
     MedicalReportOut,
 )
 from app.core.security import get_current_user, require_doctor_or_admin
-from app.utils.openai_client import generate_medical_report
+from app.utils.openai_client import generate_medical_report, extract_diagnosis_block
 
 router = APIRouter()
 
@@ -225,6 +225,7 @@ def generate_report_pdf(
 
     # Convert formatted sections (like **Diagnosis**) into styled HTML
     formatted_report = format_report_sections(report.final_report)
+    diagnosis_block = extract_diagnosis_block(report.final_report)
 
     #Prepare logo path before rendering
     logo_file = os.path.join(STATIC_DIR, "logo.png")
@@ -257,6 +258,9 @@ def generate_report_pdf(
 
         # Report content
         date=datetime.now().strftime("%d. %B %Y"),
+        diagnosis_icd=diagnosis_block["icd"],
+        diagnosis_gva=diagnosis_block["gva"],
+        diagnosis_z=diagnosis_block["z"],
         allergies=patient.allergies,
         past_illnesses=patient.past_illnesses,
         current_dx=patient.current_diagnosis,

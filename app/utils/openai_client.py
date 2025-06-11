@@ -2,6 +2,7 @@ import os
 
 from dotenv import load_dotenv
 from openai import OpenAI
+import re
 
 # Load environment variables from .env
 load_dotenv()
@@ -51,28 +52,42 @@ def generate_medical_report(
         f"Der Titel des Berichts lautet: {title.strip()}, aber verwende ihn bitte **nicht** im Text.",
         #"Verwende folgende Abschnitte und **fülle sie sehr ausführlich aus**:",
         "Verwende folgende Abschnitte:",
-        "- Befund",
-        "- Diagnose",
-        "- Therapie",
-        "- Empfehlungen",
+        "**Zusammenfassung:**",
+        "Enthält eine kurze fachliche Zusammenfassung der Anamnese und Befunde.",
+        "Schließe am Ende der Zusammenfassung eine strukturierte Diagnose mit folgenden Punkten ein:",
+        "- ICD-10: (Diagnose-Code)",
+        "- GVA: (Was ausgeschlossen wurde)",
+        "- Z: (Zustand nach ...)",
+        "**Therapie:**",
+        "Beschreibe die durchgeführte oder empfohlene Therapie.",
+        "**Empfohlene Medikation:**",
+        "Liste Medikamente auf, inklusive Dosierung und Häufigkeit, wenn verfügbar.",
         f"Schreibe sachlich, klar und ohne Platzhalter wie Name, Datum oder Geschlecht.",
         f"Beziehe dich auf {patient_term} nur wenn nötig.",
         f"Anamnese:\n{history.strip()}",
         f"Körperliche Untersuchung:\n{exam.strip()}"
     ]
 
-    # Add optional fields
+    context_parts = []
+
     if allergies:
-        sections.append(f"Allergien:\n{allergies.strip()}")
+        context_parts.append(f"Allergien:\n{allergies.strip()}")
     if past_illnesses:
-        sections.append(f"Vorerkrankungen:\n{past_illnesses.strip()}")
+        context_parts.append(f"Vorerkrankungen:\n{past_illnesses.strip()}")
     if current_dx:
-        sections.append(f"Aktuelle Diagnose:\n{current_dx.strip()}")
+        context_parts.append(f"Aktuelle Diagnose:\n{current_dx.strip()}")
     if notes:
-        sections.append(f"Zusätzliche Notizen:\n{notes.strip()}")
+        context_parts.append(f"Zusätzliche Notizen:\n{notes.strip()}")
     if previous_reports:
         joined = "\n\n--- Frühere Berichte ---\n\n" + "\n\n---\n\n".join(previous_reports)
-        sections.append(joined)
+        context_parts.append(joined)
+
+    if context_parts:
+        sections.append(
+            "Zur besseren Einschätzung erhältst du zusätzliche Kontextinformationen, "
+            "die **nicht direkt im Bericht erscheinen sollen**:\n\n" +
+            "\n\n".join(context_parts)
+        )
 
     # Final instruction
     sections.append("Erstelle jetzt den Abschlussbericht mit medizinischer Fachsprache.")
@@ -102,3 +117,34 @@ def generate_medical_report(
     )
 
     return response.choices[0].message.content.strip()
+
+
+def extract_diagnosis_block(final_report: str) -> dict:
+    """
+    Extracts ICD-10, GVA, and Z lines from the AI-generated report.
+
+    Returns:
+        dict: {
+            "icd": "...",
+            "gva": "...",
+            "z": "..."
+        }
+    """
+    diagnosis = {
+        "icd": "",
+        "gva": "",
+        "z": ""
+    }
+
+    icd_match = re.search(r"[-–•]?\s*ICD-10:\s*(.+)", final_report)
+    gva_match = re.search(r"[-–•]?\s*GVA:\s*(.+)", final_report)
+    z_match = re.search(r"[-–•]?\s*Z:\s*(.+)", final_report)
+
+    if icd_match:
+        diagnosis["icd"] = icd_match.group(1).strip()
+    if gva_match:
+        diagnosis["gva"] = gva_match.group(1).strip()
+    if z_match:
+        diagnosis["z"] = z_match.group(1).strip()
+
+    return diagnosis

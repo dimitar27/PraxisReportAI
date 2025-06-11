@@ -55,9 +55,12 @@
         }
 
         .paragraph-block {
-            margin-top: 0; /* adjusted */
+            margin-top: 0;
             margin-bottom: 1.4rem;
             page-break-inside: avoid;
+
+            font-size: 13pt;
+            line-height: 1.4;
         }
 
         hr {
@@ -75,6 +78,16 @@
         .footer {
             margin-top: 4rem;
         }
+
+        .report-info-block {
+        font-size: 13pt;
+        page-break-inside: avoid;
+        }
+
+        .report-info-block strong {
+        font-weight: bold;
+        }
+
     </style>
 </head>
 <body>
@@ -105,15 +118,23 @@
 </div>
 <hr>
 
-{% if current_dx %}
-<div class="small-section"><strong>Diagnose:</strong> {{ current_dx }}</div>
+{% if diagnosis_icd or diagnosis_gva or diagnosis_z %}
+<div class="report-info-block"><strong>Diagnose:</strong>
+    <ul class="diagnosis-list" style="margin: 0.2rem 0 0 1.2rem; padding-left: 0;">
+        {% if diagnosis_icd %}<li><strong>ICD-10:</strong> {{ diagnosis_icd }}</li>{% endif %}
+        {% if diagnosis_gva %}<li><strong>GVA:</strong> {{ diagnosis_gva }}</li>{% endif %}
+        {% if diagnosis_z %}<li><strong>Z:</strong> {{ diagnosis_z }}</li>{% endif %}
+    </ul>
+</div>
 {% endif %}
+
 {% if past_illnesses %}
-<div class="small-section"><strong>Vorerkrankungen:</strong> {{ past_illnesses }}</div>
+<div class="report-info-block"><strong>Vorerkrankungen:</strong> {{ past_illnesses }}</div>
 {% endif %}
 {% if allergies %}
-<div class="small-section"><strong>Allergien:</strong> {{ allergies }}</div>
+<div class="report-info-block"><strong>Allergien:</strong> {{ allergies }}</div>
 {% endif %}
+
 
 
 <div class="section-header">Anamnese:</div>
