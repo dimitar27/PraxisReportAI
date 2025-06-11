@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 import re
+from datetime import date
 
 # Load environment variables from .env
 load_dotenv()
@@ -20,7 +21,8 @@ def generate_medical_report(
         past_illnesses: str = "",
         current_dx: str = "",
         notes: str = "",
-        previous_reports: list[str] = None
+        previous_reports: list[str] = None,
+        patient_dob: date = None
 ) -> str:
     """
     Generate a structured medical report in professional German using OpenAI.
@@ -28,13 +30,14 @@ def generate_medical_report(
     Args:
         title (str): Report title (not included in output).
         history (str): Patient history (Anamnese).
-        exam (str): Physical examination results.
+        exam (str): Physical examination results (Körperliche Untersuchung).
         gender (str, optional): Patient gender to guide phrasing.
         allergies (str, optional): Known allergies.
         past_illnesses (str, optional): past medical conditions.
         current_dx (str, optional): Current diagnoses.
         notes (str, optional): Additional notes.
         previous_reports (list[str], optional): Past reports to use as context.
+        patient_dob (date, optional): Date of birth to calculate and include patient’s age.
 
     Returns:
         str: Generated medical report in German.
@@ -55,7 +58,7 @@ def generate_medical_report(
         "**Zusammenfassung:**",
         "Enthält eine kurze fachliche Zusammenfassung der Anamnese und Befunde.",
         "Schließe am Ende der Zusammenfassung eine strukturierte Diagnose mit folgenden Punkten ein:",
-        "- ICD-10: (Diagnose-Code)",
+        "- ICD-10: (Diagnose-Code und Bezeichnung, z. B. G45.9 – Transitorische zerebrale Ischämie)",
         "- GVA: (Was ausgeschlossen wurde)",
         "- Z: (Zustand nach ...)",
         "**Therapie:**",
@@ -69,7 +72,9 @@ def generate_medical_report(
     ]
 
     context_parts = []
-
+    if patient_dob:
+        age = calculate_age(patient_dob)
+        context_parts.append(f"Alter: {age} Jahre")
     if allergies:
         context_parts.append(f"Allergien:\n{allergies.strip()}")
     if past_illnesses:
@@ -84,9 +89,12 @@ def generate_medical_report(
 
     if context_parts:
         sections.append(
-            "Zur besseren Einschätzung erhältst du zusätzliche Kontextinformationen, "
-            "die **nicht direkt im Bericht erscheinen sollen**:\n\n" +
-            "\n\n".join(context_parts)
+            "Die folgenden Informationen dienen **ausschließlich als Kontext**, "
+            "um dir ein besseres medizinisches Gesamtbild zu vermitteln. "
+            "Bitte **vermeide es, Textstellen direkt zu übernehmen**. "
+            "Du darfst jedoch relevante Inhalte sinngemäß berücksichtigen, "
+            "wenn sie für die Beurteilung medizinisch wichtig sind:\n\n"
+            + "\n\n".join(context_parts)
         )
 
     # Final instruction
@@ -103,9 +111,10 @@ def generate_medical_report(
                 "role": "system",
                 "content": (
                     "Du bist ein medizinischer Experte und erstellst präzise medizinische Berichte auf Deutsch. "
-                    "Füge keine rechtlichen Hinweise oder allgemeinen Disclaimer am Ende des Berichts hinzu."
+                    "Füge keine rechtlichen Hinweise oder allgemeinen Disclaimer am Ende des Berichts hinzu. "
+                    "Vermeide am Ende des Berichts pauschale Empfehlungen wie 'regelmäßige Verlaufskontrollen' "
+                    "oder allgemeine Formulierungen, es sei denn, sie ergeben sich konkret aus den vorliegenden Befunden."
                 )
-
             },
             {
                 "role": "user",
@@ -141,10 +150,43 @@ def extract_diagnosis_block(final_report: str) -> dict:
     z_match = re.search(r"[-–•]?\s*Z:\s*(.+)", final_report)
 
     if icd_match:
-        diagnosis["icd"] = icd_match.group(1).strip()
+        diagnosis["icd"] = clean_markdown(icd_match.group(1))
     if gva_match:
-        diagnosis["gva"] = gva_match.group(1).strip()
+        diagnosis["gva"] = clean_markdown(gva_match.group(1))
     if z_match:
-        diagnosis["z"] = z_match.group(1).strip()
+        diagnosis["z"] = clean_markdown(z_match.group(1))
 
     return diagnosis
+
+
+def clean_markdown(text: str) -> str:
+    """
+    Removes Markdown-style bold markers (**...**) from the given text.
+    """
+    return re.sub(r"\*\*(.*?)\*\*", r"\1", text).strip()
+
+
+def calculate_age(dob: date) -> int:
+    """
+    Calculate the current age of a person based on their date of birth.
+
+    Args:
+        dob (date): The person's date of birth.
+
+    Returns:
+        int: The person's age in full years.
+    """
+    # Get today’s date
+    today = date.today()
+
+    # Start with the difference in years
+    age = today.year - dob.year
+
+    # If the birthday hasn't happened yet this year, subtract 1
+    if (today.month, today.day) < (dob.month, dob.day):
+        age -= 1
+
+    return age
+
+
+
