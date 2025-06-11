@@ -192,7 +192,9 @@ def generate_report_pdf(
     report = (
         db.query(MedicalReport)
         .options(
-            joinedload(MedicalReport.patient).joinedload(Patient.profile),
+            joinedload(MedicalReport.patient)
+            .joinedload(Patient.profile)
+            .joinedload(Profile.addresses),
             joinedload(MedicalReport.patient)
             .joinedload(Patient.doctor)
             .joinedload(User.profile)
@@ -212,12 +214,14 @@ def generate_report_pdf(
         )
 
     doctor_user = patient.doctor
-    profile = doctor_user.profile
-    if not profile or not profile.addresses:
+    doctor_profile = doctor_user.profile
+    if not doctor_profile or not doctor_profile.addresses:
         raise HTTPException(status_code=400, detail="Doctor's address missing")
-
     # Use the first address associated with the doctor
-    address = profile.addresses[0]
+    doctor_address = doctor_profile.addresses[0]
+
+    patient_profile = patient.profile
+    patient_address = patient_profile.addresses[0] if patient_profile and patient_profile.addresses else None
 
     # Convert formatted sections (like **Diagnosis**) into styled HTML
     formatted_report = format_report_sections(report.final_report)
@@ -230,26 +234,29 @@ def generate_report_pdf(
     # and populate it with report, patient, and doctor data
     template = env.get_template("report_template.html")
     rendered_html = template.render(
+        # Doctor Info
         practice_name=doctor_user.practice_name or "Praxis",
         specialization=doctor_user.specialization or "Facharzt",
-        phone=profile.phone_number,
-        email=profile.email,
-        street=address.street,
-        postal_code=address.postal_code,
-        city=address.city,
+        phone=doctor_profile.phone_number,
+        email=doctor_profile.email,
+        street=doctor_address.street,
+        postal_code=doctor_address.postal_code,
+        city=doctor_address.city,
         logo_path=logo_path,
 
-        date=datetime.now().strftime("%d. %B %Y"),
-
-        patient_name=(
-            f"{patient.profile.first_name} {patient.profile.last_name}"
-        ),
+        # Patient info
+        patient_name=f"{patient_profile.first_name} {patient_profile.last_name}",
         birth_date=patient.date_of_birth.strftime("%d.%m.%Y"),
         patient_gender=patient.gender.capitalize(),
-        gendered_prefix=(
-            "Herr" if patient.gender.lower() == "männlich" else "Frau"
-        ),
+        gendered_prefix="Herr" if patient.gender.lower() == "männlich" else "Frau",
 
+        patient_street=patient_address.street if patient_address else "",
+        patient_postal_code=patient_address.postal_code if patient_address else "",
+        patient_city=patient_address.city if patient_address else "",
+        patient_country=patient_address.country if patient_address else "",
+
+        # Report content
+        date=datetime.now().strftime("%d. %B %Y"),
         allergies=patient.allergies,
         past_illnesses=patient.past_illnesses,
         current_dx=patient.current_diagnosis,
@@ -258,7 +265,7 @@ def generate_report_pdf(
         final_report=formatted_report,
         report_main_heading=report.title,
 
-        doctor_name=f"{profile.first_name} {profile.last_name}",
+        doctor_name=f"{doctor_profile.first_name} {doctor_profile.last_name}",
         doctor_title=doctor_user.title
     )
 
@@ -266,14 +273,11 @@ def generate_report_pdf(
     pdf = HTML(string=rendered_html).write_pdf()
 
     filename = f'attachment; filename="arztbrief_{report_id}.pdf"'
+
     # Return the PDF as a downloadable HTTP response
     return Response(
         content=pdf,
         media_type="application/pdf",
-        headers={
-            "Content-Disposition": (
-                f'attachment; filename="arztbrief_{report_id}.pdf"'
-            )
-        }
+        headers={"Content-Disposition": filename}
     )
 
