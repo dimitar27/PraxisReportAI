@@ -30,4 +30,5 @@ RUN pip install -r requirements.txt
 
 
 # Start the FastAPI app with Uvicorn
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port $PORT"]
+# Use direct python -m uvicorn, set a default port, and enable info logging
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "${PORT:-8000}", "--log-level", "info"]
