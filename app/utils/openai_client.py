@@ -176,7 +176,6 @@ def calculate_age(dob: date) -> int:
     Returns:
         int: The person's age in full years.
     """
-    # Get today’s date
     today = date.today()
 
     # Start with the difference in years

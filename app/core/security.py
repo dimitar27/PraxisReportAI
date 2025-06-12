@@ -9,14 +9,15 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models.user import User
+from app.core.config import settings
 
 # OAuth2 scheme used to extract and validate bearer token from requests
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/signin")
 
 # Secret used to sign the JWT token
-SECRET_KEY = "your-secret-key"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+SECRET_KEY = settings.secret_key
+ALGORITHM = settings.algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") #for password hashing
