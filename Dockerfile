@@ -12,7 +12,9 @@ RUN apt-get update && apt-get install -y \
     libxslt1.1 \
     libssl-dev \
     fonts-liberation \
-    fonts-dejavu-core && \
+    fonts-dejavu-core \
+    fontconfig \
+    shared-mime-info && \
     apt-get clean
 
 # Set working directory
