@@ -21,17 +21,20 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy everything into the container
-COPY . /app
-
-# Make sure script is executable AFTER it's copied
-RUN chmod +x /app/start.sh
+# Copy only requirements first (for better Docker layer caching)
+COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
+COPY . .
+
+# Create a non-root user (Render runs as root by default, this is optional security)
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
 
 EXPOSE 8000
 
-# Start the app
-CMD ["/app/start.sh"]
+# Use uvicorn directly with dynamic port support
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

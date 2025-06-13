@@ -5,15 +5,21 @@ services:
     plan: free
     dockerfilePath: Dockerfile
     envVars:
-      - key: PORT
-        value: "8000"
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: praxisreportdb
+          property: connectionString
       - key: OPENAI_API_KEY
-        sync: false
+        sync: false  # Set manually via Render dashboard
       - key: SECRET_KEY
-        sync: false
+        sync: false  # Set manually via Render dashboard
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "60"
       - key: ALGORITHM
         value: "HS256"
+
+databases:
+  - name: praxisreportdb
+    plan: free
+    databaseName: praxisreportdb
+    user: praxisreportdb_user
