@@ -21,15 +21,17 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy everything from local to the container
+# Copy everything into the container
 COPY . /app
+
+# Make sure script is executable AFTER it's copied
+RUN chmod +x /app/start.sh
 
 # Install Python dependencies
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 EXPOSE 8000
-# Start the FastAPI app with Uvicorn
-# Use 'sh -c' so the ${PORT} environment variable is expanded correctly
-# Bind to 0.0.0.0 so the container exposes the port to Render
-CMD sh -c 'exec python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info'
+
+# Start the app
+CMD ["/app/start.sh"]
