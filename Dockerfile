@@ -30,6 +30,6 @@ RUN pip install -r requirements.txt
 
 EXPOSE 8000
 # Start the FastAPI app with Uvicorn
-# Use 'bash -c' so the ${PORT} environment variable is properly expanded by the shell
+# Use 'sh -c' so the ${PORT} environment variable is expanded correctly
 # Bind to 0.0.0.0 so the container exposes the port to Render
-CMD bash -c 'exec python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info'
+CMD sh -c 'exec python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info'
