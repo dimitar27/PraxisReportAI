@@ -28,7 +28,8 @@ COPY . /app
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-
+EXPOSE 8000
 # Start the FastAPI app with Uvicorn
-# Use direct python -m uvicorn, set a default port, and enable info logging
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "${PORT:-8000}", "--log-level", "info"]
+# Use 'bash -c' so the ${PORT} environment variable is properly expanded by the shell
+# Bind to 0.0.0.0 so the container exposes the port to Render
+CMD bash -c 'exec python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info'
